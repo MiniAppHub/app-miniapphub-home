@@ -1,0 +1,56 @@
+# Публикация Home: сайт из mapp/public в ветку gh-pages, архив — в релиз по тегу.
+name: publish
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm run check
+      - name: Подготовить сайт
+        run: |
+          test -f mapp/public/index.html
+          test -f mapp/public/app.js
+          ls -R mapp/public
+      - name: Обновить gh-pages
+        run: |
+          git config user.name "miniapphub-bot"
+          git config user.email "bot@users.noreply.github.com"
+          rm -rf /tmp/site && cp -r mapp/public /tmp/site
+          git checkout --orphan pages-tmp
+          git rm -rfq .
+          cp -r /tmp/site/. .
+          git add -A
+          git commit -qm "Pages: $GITHUB_SHA"
+          git push -f origin pages-tmp:gh-pages
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Упаковать mapp
+        run: |
+          sudo apt-get install -y -q zip >/dev/null
+          cd mapp && zip -qr ../miniapphub.home-${GITHUB_REF_NAME#v}.zip . && cd ..
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: miniapphub.home-*.zip
+          generate_release_notes: true
+      - name: Сообщить порталу
+        env:
+          GH_TOKEN: ${{ secrets.PORTAL_TOKEN }}
+        run: |
+          curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/MiniAppHub/miniapphub.github.io/dispatches \
+            -d '{"event_type":"app-release","client_payload":{"repo":"MiniAppHub/app-miniapphub-home"}}'
