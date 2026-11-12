@@ -1,0 +1,11 @@
+{
+  "name": "app-miniapphub-home",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Home: лаунчер MiniAppHub — рабочий стол, каталог и настройки",
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check-manifest.mjs"
+  },
+  "license": "MIT"
+}
