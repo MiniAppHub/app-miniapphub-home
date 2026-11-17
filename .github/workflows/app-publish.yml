@@ -82,7 +82,7 @@ jobs:
           set -eu
           DIR="${{ steps.man.outputs.dir }}"
           cd "$DIR" && zip -qr "$GITHUB_WORKSPACE/MiniAppHub-v${{ steps.man.outputs.version }}.zip" . && cd -
-          ls -la MiniAppHub-app-*.zip
+          ls -la "MiniAppHub-v${{ steps.man.outputs.version }}.zip"
 
       - name: Классификация версии
         id: cls
