@@ -19,7 +19,7 @@ const VALID = ['filesystem.external', 'apps.manage', 'apps.execute', 'network.se
 for (const p of m.permissions || []) {
   if (!VALID.includes(p)) errors.push('неизвестное разрешение: ' + p);
 }
-if (m.icon && !existsSync(join(root, m.icon))) errors.push('нет иконки ' + m.icon);
+if (m.icon && !existsSync(join(root, 'public', m.icon))) errors.push('нет иконки ' + m.icon);
 if (!existsSync(join(root, 'public', 'index.html'))) errors.push('нет public/index.html');
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('OK: ' + m.id + '@' + m.version);

@@ -30,9 +30,10 @@ export class Mapp {
     });
   }
 
-  shell(action, params) { return this._call('shell', action, params); }
-  apps(action, params) { return this._call('apps', action, params); }
-  system(action, params) { return this._call('system', action, params); }
+  /** Окно разрешений ждёт пользователя, поэтому у apps() таймаут больше. */
+  shell(action, params, timeout) { return this._call('shell', action, params, timeout); }
+  apps(action, params, timeout = 180000) { return this._call('apps', action, params, timeout); }
+  system(action, params, timeout) { return this._call('system', action, params, timeout); }
 }
 
 export const mapp = new Mapp();

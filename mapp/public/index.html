@@ -9,58 +9,23 @@
 </head>
 <body>
 <header class="bar">
-  <button class="brand" data-view="home">MiniAppHub</button>
-  <span id="env" class="env"></span>
-</header>
-
-<div class="tabs" role="tablist">
-  <button class="tab on" data-view="home" role="tab">Рабочий стол</button>
-  <button class="tab" data-view="catalog" role="tab">Каталог</button>
-  <button class="tab" data-view="settings" role="tab">Настройки</button>
-</div>
-
-<main id="home" class="view">
-  <div id="grid" class="grid"></div>
-  <p id="empty" class="muted" hidden>Пока нет приложений. Откройте «Каталог» и установите первое.</p>
-</main>
-
-<main id="catalog" class="view" hidden>
-  <input id="q" class="search" type="search" placeholder="Поиск по названию и описанию" aria-label="Поиск">
-  <div id="list" class="list"></div>
-  <p id="catalog-msg" class="muted" hidden></p>
-</main>
-
-<main id="settings" class="view" hidden>
-  <form id="form" class="form">
-    <label>Адрес каталога
-      <input name="catalogUrl" type="url" required autocomplete="off">
-    </label>
-    <label>Тема
-      <select name="theme"><option value="dark">тёмная</option><option value="light">светлая</option></select>
-    </label>
-    <button class="btn" type="submit">Сохранить</button>
-    <p id="form-msg" class="muted" hidden></p>
-  </form>
-  <section class="about">
-    <p>Оболочка <span id="shell-ver">—</span> · платформа <span id="shell-platform">—</span></p>
-    <button id="reload" class="btn ghost" type="button">Обновить список</button>
-  </section>
-</main>
-
-<div id="sheet" class="sheet" hidden>
-  <div class="sheet-card">
-    <h2 id="sheet-title"></h2>
-    <p id="sheet-desc" class="muted"></p>
-    <p id="sheet-perm" class="perm"></p>
-    <div class="sheet-actions">
-      <button id="sheet-primary" class="btn"></button>
-      <button id="sheet-close" class="btn ghost" type="button">Закрыть</button>
+  <span class="brand">MiniAppHub</span>
+  <div class="menu">
+    <button id="gear" class="icon" type="button" aria-label="Меню" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
+    </button>
+    <div id="menu" class="popover" role="menu" hidden>
+      <a role="menuitem" href="settings.html">Настройки</a>
     </div>
   </div>
-</div>
+</header>
+
+<main class="view">
+  <div id="grid" class="grid"></div>
+  <p id="empty" class="muted" hidden>Пока нет приложений. Откройте «Маркет», чтобы установить первое.</p>
+</main>
 
 <div id="toast" class="toast" hidden></div>
-
 <script type="module" src="app.js"></script>
 </body>
 </html>
