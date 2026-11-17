@@ -88,6 +88,7 @@ jobs:
         id: cls
         run: |
           set -eu
+          NEW="${{ steps.man.outputs.version }}"
           # «latest» — самый свежий релиз с числовым тегом vX.Y.Z;
           # служебные теги (старый плавающий latest и прочие) в сравнении не участвуют
           PREV=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName -q '.[].tagName' 2>/dev/null \
