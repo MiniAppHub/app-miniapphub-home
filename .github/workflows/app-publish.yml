@@ -1,0 +1,157 @@
+# Workflow мини-приложения. Кладётся платформой, ручная правка не сохраняется:
+# при следующем приёме PR файл заменяется на этот.
+#
+# Что делает при пуше в main:
+#   1) читает mapp/mapp.manifest.json и версию из него;
+#   2) собирает сайт из mapp/<routers.web | public> в ветку gh-pages;
+#   3) обновляет плавающий релиз latest в этом репозитории (архив);
+#   4) при смене мажорной версии создаёт релиз vX.0.0;
+#   5) отправляет в портал упрощённый манифест: версии latest и major со ссылками.
+name: app-publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    if: github.repository != 'MiniAppHub/template'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PORTAL_REPO: MiniAppHub/miniapphub.github.io
+      PORTAL_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - name: Прочитать манифест
+        id: man
+        run: |
+          set -eu
+          M=mapp/mapp.manifest.json
+          test -f "$M" || { echo "::error::нет $M"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('$M', 'utf8'));
+            for (const k of ['id','name','version','author']) if (!m[k]) throw new Error('в манифесте нет ' + k);
+            if (!/^[a-z0-9-]+\.[a-z0-9-]+$/i.test(m.id)) throw new Error('id должен быть author.app-name');
+            if (!m.id.toLowerCase().startsWith(m.author.toLowerCase() + '.')) throw new Error('префикс id не совпадает с author');
+            if (!/^\d+\.\d+\.\d+$/.test(m.version)) throw new Error('version должен быть X.Y.Z');
+            const web = String((m.routers && m.routers.web) || 'public').replace(/^\.?\//,'').replace(/\/+\$/,'');
+            const dir = 'mapp/' + web;
+            if (!fs.existsSync(dir + '/index.html')) throw new Error('нет ' + dir + '/index.html');
+            const out = { id: m.id, name: m.name, version: m.version, author: m.author,
+              description: m.description || '', icon: m.icon || null,
+              permissions: Array.isArray(m.permissions) ? m.permissions : [], dir };
+            fs.writeFileSync('/tmp/man.json', JSON.stringify(out));
+            for (const [k,v] of Object.entries({id:out.id,name:out.name,version:out.version,author:out.author,dir:out.dir}))
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, k + '=' + v + '\n');
+            console.log('манифест:', out.id, out.version, '→', out.dir);
+          "
+
+      - name: Собрать сайт в gh-pages
+        run: |
+          set -eu
+          DIR="${{ steps.man.outputs.dir }}"
+          mkdir -p /tmp/site
+          cp -r "$DIR"/. /tmp/site/
+          touch /tmp/site/.nojekyll
+          # манифест публикуется рядом: по нему мини-приложение проверяет обновления
+          cp mapp/mapp.manifest.json /tmp/site/mapp.manifest.json
+          cd /tmp/site
+          git init -q -b gh-pages
+          git config user.name "MiniAppHub"
+          git config user.email "bot@users.noreply.github.com"
+          git add -A
+          git commit -qm "gh-pages: ${{ steps.man.outputs.version }}"
+          git push -f "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" gh-pages
+
+      - name: Упаковать архив
+        run: |
+          set -eu
+          DIR="${{ steps.man.outputs.dir }}"
+          cd "$DIR" && zip -qr "$GITHUB_WORKSPACE/MiniAppHub-v${{ steps.man.outputs.version }}.zip" . && cd -
+          ls -la MiniAppHub-app-*.zip
+
+      - name: Классификация версии
+        id: cls
+        run: |
+          set -eu
+          # «latest» — самый свежий релиз с числовым тегом vX.Y.Z;
+          # служебные теги (старый плавающий latest и прочие) в сравнении не участвуют
+          PREV=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName -q '.[].tagName' 2>/dev/null \
+                 | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 | sed 's/^v//' || true)
+          echo "последний релиз: ${PREV:-нет}, собираем: $NEW"
+          echo "prev=$PREV" >> "$GITHUB_OUTPUT"
+          if [ -n "$PREV" ] && [ "$NEW" = "$PREV" ]; then
+            echo "релиз v$NEW уже есть — публикация пропущена"
+            echo "action=skip" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -n "$PREV" ] && [ "$(printf '%s\n%s\n' "$PREV" "$NEW" | sort -V | tail -1)" != "$NEW" ]; then
+            echo "::error::версия $NEW ниже последнего релиза $PREV"; exit 1
+          fi
+          echo "action=release" >> "$GITHUB_OUTPUT"
+
+      - name: Релиз версии
+        if: steps.cls.outputs.action == 'release'
+        run: |
+          set -eu
+          V="${{ steps.man.outputs.version }}"
+          TAG="v$V"
+          ZIP="MiniAppHub-v$V.zip"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" "$ZIP" --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --title "v$V" --generate-notes
+          fi
+
+      - name: Отправить в портал
+        if: steps.cls.outputs.action == 'release'
+        env:
+          V: ${{ steps.man.outputs.version }}
+        run: |
+          set -eu
+          MAJOR="${V%%.*}"
+          OWNER_LC=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          NAME="${GITHUB_REPOSITORY#*/}"
+          WEB="https://${OWNER_LC}.github.io/${NAME}/"
+          TAG="v$V"
+          URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/MiniAppHub-v$V.zip"
+
+          PAYLOAD=$(node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync("/tmp/man.json", "utf8"));
+            const e = process.env;
+            process.stdout.write(JSON.stringify({
+              id: m.id,
+              name: m.name,
+              author: m.author,
+              description: m.description,
+              permissions: m.permissions,
+              web: e.WEB,
+              manifest: e.WEB + "mapp.manifest.json",
+              icon: e.WEB + "assets/icon.svg",
+              repo: "https://github.com/" + e.GITHUB_REPOSITORY,
+              version: { latest: { v: e.V, url: e.URL } }
+            }));
+          ')
+
+          echo "$PAYLOAD"
+          curl -sS -X POST \
+            -H "Authorization: Bearer $PORTAL_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$PORTAL_REPO/dispatches" \
+            -d "{\"event_type\":\"app-release\",\"client_payload\":$PAYLOAD}"
