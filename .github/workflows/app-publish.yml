@@ -131,6 +131,7 @@ jobs:
           WEB="https://${OWNER_LC}.github.io/${NAME}/"
           TAG="v$V"
           URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/MiniAppHub-v$V.zip"
+          export WEB URL V
 
           PAYLOAD=$(node -e '
             const fs = require("fs");
