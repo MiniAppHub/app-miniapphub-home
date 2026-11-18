@@ -1,21 +1,14 @@
 /**
- * Настройки оболочки: адрес каталога и тема. Сохраняются в оболочке.
+ * Настройки оболочки: адрес каталога и тема (список тем берётся у оболочки).
  * @module settings
  */
 import { mapp, Mapp } from './api/sdk.js';
-
-const $ = (id) => document.getElementById(id);
-
-async function unwrap(promise) {
-  const res = await promise;
-  if (!res || res.ok !== true) throw new Error((res && res.error) || 'api error');
-  return res.result;
-}
+import { $, esc, unwrap } from './common.js';
 
 function showMsg(text, isError = false) {
   const el = $('form-msg');
   el.hidden = false;
-  el.style.color = isError ? '#ff7a7a' : '';
+  el.style.color = isError ? 'var(--danger)' : '';
   el.textContent = text;
 }
 
@@ -27,7 +20,6 @@ $('form').addEventListener('submit', async (e) => {
       catalogUrl: form.catalogUrl.value.trim(),
       theme: form.theme.value,
     }));
-    document.documentElement.dataset.theme = saved.theme;
     showMsg('Сохранено');
   } catch (err) {
     showMsg('Ошибка: ' + err.message, true);
@@ -40,10 +32,13 @@ async function boot() {
     return;
   }
   try {
+    const r = await mapp.theme('get');
+    if (r.ok) mapp.applyTheme(r.result);
     const settings = await unwrap(mapp.shell('getSettings'));
+    const list = await unwrap(mapp.theme('list'));
     $('form').catalogUrl.value = settings.catalogUrl || '';
-    $('form').theme.value = settings.theme || 'dark';
-    document.documentElement.dataset.theme = settings.theme || 'dark';
+    $('form').theme.innerHTML = list.themes.map((t) =>
+      `<option value="${esc(t.name)}"${t.name === settings.theme ? ' selected' : ''}>${esc(t.name)}</option>`).join('');
     const v = await unwrap(mapp.shell('getVersion'));
     $('shell-ver').textContent = v.version;
     $('shell-platform').textContent = v.platform;

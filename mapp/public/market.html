@@ -16,21 +16,9 @@
 
 <main class="view">
   <input id="q" class="search" type="search" placeholder="Поиск по названию и описанию" aria-label="Поиск">
-  <div id="list" class="list"></div>
+  <div id="grid" class="grid"></div>
   <p id="msg" class="muted" hidden></p>
 </main>
-
-<div id="sheet" class="sheet" hidden>
-  <div class="sheet-card" role="dialog" aria-modal="true">
-    <h2 id="sheet-title"></h2>
-    <p id="sheet-desc" class="muted"></p>
-    <p id="sheet-perm" class="muted small"></p>
-    <div class="sheet-actions">
-      <button id="sheet-close" class="btn ghost" type="button">Закрыть</button>
-      <button id="sheet-primary" class="btn" type="button"></button>
-    </div>
-  </div>
-</div>
 
 <div id="toast" class="toast" hidden></div>
 <script type="module" src="market.js"></script>

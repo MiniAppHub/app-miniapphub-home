@@ -1,13 +1,14 @@
 {
   "id": "miniapphub.home",
   "name": "home",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "miniapphub",
   "description": "Лаунчер платформы: рабочий стол установленных приложений, каталог, настройки оболочки.",
   "icon": "assets/icon.svg",
   "permissions": [
     "apps.manage",
-    "shell.launcher"
+    "shell.launcher",
+    "shell.theme"
   ],
   "dependencies": [],
   "routers": {

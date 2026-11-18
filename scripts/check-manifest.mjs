@@ -15,7 +15,7 @@ if (m.id && m.author && !m.id.toLowerCase().startsWith(m.author.toLowerCase() + 
   errors.push('префикс id должен совпадать с author');
 }
 const VALID = ['filesystem.external', 'apps.manage', 'apps.execute', 'network.server',
-  'network.bluetooth', 'shell.launcher', 'system.contacts'];
+  'network.bluetooth', 'shell.launcher', 'system.contacts', 'shell.theme'];
 for (const p of m.permissions || []) {
   if (!VALID.includes(p)) errors.push('неизвестное разрешение: ' + p);
 }
