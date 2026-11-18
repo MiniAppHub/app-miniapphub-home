@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>Маркет · MiniAppHub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <button id="home" class="back" type="button">← Рабочий стол</button>
+  <span class="brand">Маркет</span>
+  <span></span>
+</header>
+
+<main class="view">
+  <input id="q" class="search" type="search" placeholder="Поиск по названию и описанию" aria-label="Поиск">
+  <div id="grid" class="grid"></div>
+  <p id="msg" class="muted" hidden></p>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+<script type="module" src="market.js"></script>
+</body>
+</html>
